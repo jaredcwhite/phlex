@@ -26,6 +26,13 @@ module Phlex
       @_target << Tag::DOCTYPE
     end
 
+    def without_attribute_safety(&block)
+      original = @_allow_unsafe_attributes
+      @_allow_unsafe_attributes = true
+      yield
+      @_allow_unsafe_attributes = original
+    end
+
     def _raw(content)
       @_target << content
     end
@@ -72,8 +79,10 @@ module Phlex
       attributes.each do |k, v|
         next unless v
 
-        if Tag::EVENT_ATTRIBUTES[k] || k.match?(/[<>&"']/)
-          raise ArgumentError, "Unsafe attribute name detected: #{k}."
+        unless @_allow_unsafe_attributes
+          if Tag::EVENT_ATTRIBUTES[k] || k.match?(/[<>&"']/)
+            raise ArgumentError, "Unsafe attribute name detected: #{k}."
+          end
         end
 
         if v == true
